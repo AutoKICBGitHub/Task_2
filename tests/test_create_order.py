@@ -1,5 +1,4 @@
 import allure
-import json
 from api_client import StellarBurgersAPI
 from helpers import get_ingredient_ids
 from data import EXAMPLE_INGREDIENT_IDS, INVALID_INGREDIENT_HASH, ERROR_MESSAGES
@@ -35,17 +34,12 @@ class TestCreateOrder:
         with allure.step("Отправка запроса на создание заказа без авторизации"):
             response = api.create_order([EXAMPLE_INGREDIENT_IDS[0]])
         
-        with allure.step("Проверка статус кода ответа (200, 400 или 401)"):
-            assert response.status_code in [200, 400, 401]
+        with allure.step("Проверка статус кода ответа (400)"):
+            assert response.status_code == 400
         
         with allure.step("Проверка тела ответа"):
             response_data = response.json()
-            if response.status_code == 200:
-                assert response_data["success"] is True
-            else:
-                assert response_data["success"] is False
-                if "message" in response_data:
-                    assert len(response_data["message"]) > 0
+            assert response_data["success"] is False
 
     @allure.title("Создание заказа без ингредиентов")
     def test_create_order_without_ingredients(self, authorized_user):
@@ -73,12 +67,3 @@ class TestCreateOrder:
         
         with allure.step("Проверка статус кода ответа (500)"):
             assert response.status_code == 500
-        
-        with allure.step("Проверка тела ответа с ошибкой"):
-            try:
-                response_data = response.json()
-                if "success" in response_data:
-                    assert response_data["success"] is False
-            except json.JSONDecodeError:
-                allure.attach(response.text, "Response body (not JSON)", allure.attachment_type.TEXT)
-                pass
